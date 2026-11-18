@@ -291,6 +291,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
             if (list != null) {
                 list.setVisibility(categories ? INVISIBLE : VISIBLE);
             }
+            updateNothingDrawerInset();
         });
         android.widget.RelativeLayout.LayoutParams nothingParams =
                 new android.widget.RelativeLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT);
@@ -1703,6 +1704,18 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     }
 
 
+    /** Keeps a bottom search bar tappable above the Nothing-style categories page. */
+    private void updateNothingDrawerInset() {
+        if (mNothingDrawer == null) {
+            return;
+        }
+        mNothingDrawer.post(() -> {
+            View search = findViewById(R.id.search_container_all_apps);
+            boolean bottom = "bottom".equals(getSearchBarPlacement());
+            mNothingDrawer.setBottomInset(search != null && bottom ? search.getHeight() : 0);
+        });
+    }
+
     private void updateAppDrawerStyle() {
         mAppDrawerStyle = AppDrawerStyle.get(getContext());
         if (mNothingDrawer != null) {
@@ -1711,6 +1724,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                 mNothingDrawer.setCategoriesMode(false);
             }
             mNothingDrawer.setVisibility(nothing ? VISIBLE : GONE);
+            updateNothingDrawerInset();
         }
         mIsAppLibrary = !LauncherPrefs.DRAWER_LIST.get(getContext());
     }
