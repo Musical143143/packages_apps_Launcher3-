@@ -151,12 +151,14 @@
             android:persistent="true"
             launcher:iconSpaceReserved="false" />
 
-        <SwitchPreferenceCompat
-            android:key="pref_cos_app_animations"
-            android:title="@string/cos_app_animations_title"
-            android:summary="@string/cos_app_animations_summary"
-            android:defaultValue="false"
-            android:persistent="true"
+        <ListPreference
+            android:key="pref_animation_effect"
+            android:title="@string/animation_effect_title"
+            android:summary="%s"
+            android:entries="@array/animation_effect_entries"
+            android:entryValues="@array/animation_effect_values"
+            android:defaultValue="standard"
+            android:persistent="false"
             launcher:iconSpaceReserved="false" />
 
         <SwitchPreferenceCompat

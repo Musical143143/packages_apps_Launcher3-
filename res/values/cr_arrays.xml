@@ -88,6 +88,18 @@
         <item>nothing</item>
     </string-array>
 
+    <!-- Home screen animation effect: Standard keeps the default transitions, Enhanced turns on
+         the spring-based app open and close animations (stored as pref_cos_app_animations). -->
+    <string-array name="animation_effect_entries">
+        <item>@string/animation_effect_standard</item>
+        <item>@string/animation_effect_enhanced</item>
+    </string-array>
+
+    <string-array name="animation_effect_values" translatable="false">
+        <item>standard</item>
+        <item>enhanced</item>
+    </string-array>
+
     <!-- App drawer sorting -->
     <string-array name="app_drawer_sort_mode_entries">
         <item>@string/app_drawer_sort_alphabetical</item>

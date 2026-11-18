@@ -489,6 +489,17 @@ public class Launcher extends StatefulActivity<LauncherState>
                 appWidgetId -> getWorkspace().removeWidget(appWidgetId));
 
         setupViews();
+
+        // Edit-mode action bar: Widgets, Wallpaper & style, Layout, Home settings, Done.
+        EditModeActionBar editModeBar = new EditModeActionBar(this);
+        getDragLayer().addView(editModeBar, editModeBar.layoutParams());
+        getStateManager().addStateListener(new StateManager.StateListener<LauncherState>() {
+            @Override
+            public void onStateTransitionComplete(LauncherState finalState) {
+                editModeBar.onStateChanged(finalState);
+            }
+        });
+
         updateDisallowBack();
 
         mAppWidgetHolder.startListening();

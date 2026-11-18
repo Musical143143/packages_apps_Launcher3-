@@ -31,6 +31,7 @@ import android.text.TextUtils;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceGroup;
@@ -142,6 +143,12 @@ public class SettingsHomescreen extends ComposeSettingsActivity
     /**
      * This fragment shows the launcher preferences.
      */
+    /** Stores the Standard (false) or Enhanced (true) animation effect. */
+    static void setCosAppAnimations(android.content.Context context, boolean enabled) {
+        LauncherPrefs.getPrefs(context).edit()
+                .putBoolean(LauncherPrefs.COS_APP_ANIMATIONS.getSharedPrefKey(), enabled).apply();
+    }
+
     public static class HomescreenSettingsFragment extends ComposePreferenceFragment implements
             SettingsCache.OnChangeListener, SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -180,14 +187,26 @@ public class SettingsHomescreen extends ComposeSettingsActivity
             mShowGoogleBarPref = screen.findPreference(LauncherPrefs.DOCK_SEARCH.getSharedPrefKey());
             mAutoAddIconsPref = screen.findPreference(SessionCommitReceiver.ADD_ICON_PREFERENCE_KEY);
 
-            SwitchPreferenceCompat cosAnimationsPref = screen.findPreference(
-                    LauncherPrefs.COS_APP_ANIMATIONS.getSharedPrefKey());
-            if (cosAnimationsPref != null) {
-                cosAnimationsPref.setOnPreferenceChangeListener((preference, newValue) -> {
-                    if (!Boolean.TRUE.equals(newValue)) {
+            // "Animation effect": Standard or Enhanced. Enhanced is the ColorOS spring
+            // animation mode, stored in pref_cos_app_animations (warning shown first).
+            ListPreference animationEffectPref = screen.findPreference("pref_animation_effect");
+            if (animationEffectPref != null) {
+                animationEffectPref.setValue(LauncherPrefs.COS_APP_ANIMATIONS.get(getContext())
+                        ? "enhanced" : "standard");
+                animationEffectPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                    if ("standard".equals(newValue)) {
+                        setCosAppAnimations(getContext(), false);
                         return true;
                     }
-                    getPreferenceManager().showDialog(preference);
+                    new AlertDialog.Builder(getContext())
+                            .setMessage(R.string.cos_app_animations_warning)
+                            .setPositiveButton(R.string.cos_app_animations_enable,
+                                    (dialog, which) -> {
+                                        setCosAppAnimations(getContext(), true);
+                                        ((ListPreference) preference).setValue("enhanced");
+                                    })
+                            .setNegativeButton(android.R.string.cancel, null)
+                            .show();
                     return false;
                 });
             }
