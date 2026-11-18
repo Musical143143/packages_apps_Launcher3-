@@ -178,6 +178,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     /** {@code true} when rendered view is in search state instead of the scroll state. */
     private boolean mIsSearching;
     private String mAppDrawerStyle = AppDrawerStyle.NORMAL;
+    private NothingDrawerView mNothingDrawer;
     private boolean mIsAppLibrary;
     private boolean mShowFastScroller;
     private PageIndicatorDots mOneUiPageIndicator;
@@ -283,6 +284,18 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                 new AlphabeticalAppsList(mActivityContext, null, null, null)));
 
         getLayoutInflater().inflate(R.layout.all_apps_content, this);
+        mNothingDrawer = new NothingDrawerView(getContext());
+        mNothingDrawer.setVisibility(GONE);
+        mNothingDrawer.setOnModeChangedListener(categories -> {
+            View list = findViewById(R.id.apps_list_view);
+            if (list != null) {
+                list.setVisibility(categories ? INVISIBLE : VISIBLE);
+            }
+        });
+        android.widget.RelativeLayout.LayoutParams nothingParams =
+                new android.widget.RelativeLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT);
+        nothingParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_TOP);
+        addView(mNothingDrawer, nothingParams);
         mHeader = findViewById(R.id.all_apps_header);
         mAdditionalHeaderRows.clear();
         mAdditionalHeaderRows.addAll(getAdditionalHeaderRows());
@@ -1358,6 +1371,9 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     @VisibleForTesting
     public void onAppsUpdated() {
         Log.d(TAG, "onAppsUpdated; number of apps: " + mAllAppsStore.getApps().length);
+        if (mNothingDrawer != null) {
+            mNothingDrawer.setApps(Arrays.asList(mAllAppsStore.getApps()));
+        }
         mAH.forEach(holder -> {
             if (holder.mAppsList != null) {
                 holder.mAppsList.onAppsUpdated();
@@ -1689,6 +1705,13 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
 
     private void updateAppDrawerStyle() {
         mAppDrawerStyle = AppDrawerStyle.get(getContext());
+        if (mNothingDrawer != null) {
+            boolean nothing = AppDrawerStyle.isNothing(mAppDrawerStyle);
+            if (!nothing) {
+                mNothingDrawer.setCategoriesMode(false);
+            }
+            mNothingDrawer.setVisibility(nothing ? VISIBLE : GONE);
+        }
         mIsAppLibrary = !LauncherPrefs.DRAWER_LIST.get(getContext());
     }
 

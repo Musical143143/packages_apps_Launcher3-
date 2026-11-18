@@ -574,6 +574,11 @@
     <string name="drawer_style_list">List style</string>
     <string name="drawer_style_oneui">OneUI style (paged)</string>
     <string name="drawer_style_ios">iOS style (homescreen only)</string>
+    <string name="drawer_style_nothing">Nothing style (All / Categories)</string>
+    <string name="nothing_drawer_all">All</string>
+    <string name="nothing_drawer_categories">Categories</string>
+    <string name="nothing_drawer_recent">Recently installed</string>
+    <string name="nothing_drawer_back">←</string>
     <string name="auto_add_shortcuts_forced_ios_summary">Enabled automatically while iOS style is active</string>
 
     <!-- App drawer sorting -->

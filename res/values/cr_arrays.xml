@@ -76,6 +76,7 @@
         <item>@string/drawer_style_list</item>
         <item>@string/drawer_style_oneui</item>
         <item>@string/drawer_style_ios</item>
+        <item>@string/drawer_style_nothing</item>
     </string-array>
 
     <string-array name="app_drawer_style_values" translatable="false">
@@ -84,6 +85,7 @@
         <item>horizontal_list</item>
         <item>vertical</item>
         <item>ios</item>
+        <item>nothing</item>
     </string-array>
 
     <!-- App drawer sorting -->

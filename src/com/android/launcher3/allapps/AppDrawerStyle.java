@@ -27,6 +27,7 @@ public final class AppDrawerStyle {
     public static final String VERTICAL_PAGED = "vertical";
     public static final String IOS = "ios";
     public static final String FULLSCREEN = "fullscreen";
+    public static final String NOTHING = "nothing";
 
     private AppDrawerStyle() { }
 
@@ -48,7 +49,12 @@ public final class AppDrawerStyle {
                 || HORIZONTAL_LIST.equals(style)
                 || VERTICAL_PAGED.equals(style)
                 || IOS.equals(style)
-                || FULLSCREEN.equals(style);
+                || FULLSCREEN.equals(style)
+                || NOTHING.equals(style);
+    }
+
+    public static boolean isNothing(String style) {
+        return NOTHING.equals(style);
     }
 
     public static boolean isNormal(String style) {
