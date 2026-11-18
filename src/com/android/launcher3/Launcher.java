@@ -617,6 +617,11 @@ public class Launcher extends StatefulActivity<LauncherState>
             return topView;
         }
 
+        // #3b Nothing-style drawer: close an open category page before leaving the drawer
+        if (getAppsView() != null && getAppsView().isNothingCategoryOpen()) {
+            return getAppsView()::closeNothingCategory;
+        }
+
         // #4 Custom back handlers
         for (BackPressHandler handler : mBackPressedHandlers) {
             if (handler.canHandleBack()) {

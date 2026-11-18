@@ -435,6 +435,10 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         if (mUniversalSearchActive || isSearching()) {
             return "top";
         }
+        if (AppDrawerStyle.isNothing(mAppDrawerStyle)) {
+            // The Nothing-style drawer always shows its search bar at the bottom.
+            return "bottom";
+        }
         return LauncherPrefs.ALL_APPS_SEARCH_PLACEMENT.get(getContext());
     }
 
@@ -1703,6 +1707,18 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         applyOneUiPagePadding();
     }
 
+
+    /** True while a Nothing-style category page is open inside the drawer. */
+    public boolean isNothingCategoryOpen() {
+        return mNothingDrawer != null && mNothingDrawer.isCategoryOpen();
+    }
+
+    /** Closes the open Nothing-style category page and returns to the category grid. */
+    public void closeNothingCategory() {
+        if (mNothingDrawer != null) {
+            mNothingDrawer.closeCategory();
+        }
+    }
 
     /** Keeps a bottom search bar tappable above the Nothing-style categories page. */
     private void updateNothingDrawerInset() {

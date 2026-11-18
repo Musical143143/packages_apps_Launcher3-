@@ -17,6 +17,7 @@
 package com.android.launcher3.allapps;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -32,6 +33,7 @@ import android.widget.TextView;
 import com.android.launcher3.BubbleTextView;
 import com.android.launcher3.R;
 import com.android.launcher3.model.data.AppInfo;
+import com.android.launcher3.settings.SettingsActivity;
 import com.android.launcher3.util.AppsListUtils;
 import com.android.launcher3.views.ActivityContext;
 
@@ -103,11 +105,29 @@ public class NothingDrawerView extends LinearLayout {
                 () -> setCategoriesMode(true));
         toggle.addView(mAllTab);
         toggle.addView(mCategoriesTab);
-        LayoutParams toggleParams = new LayoutParams(WRAP_CONTENT, WRAP_CONTENT);
-        toggleParams.gravity = Gravity.CENTER_HORIZONTAL;
-        toggleParams.topMargin = getResources().getDimensionPixelSize(
+
+        LinearLayout header = new LinearLayout(context);
+        header.setOrientation(HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.addView(toggle);
+        TextView more = new TextView(context);
+        more.setText("\u22EE");
+        more.setTextSize(20);
+        more.setTextColor(CaddyStyle.textColor(context));
+        more.setPadding(dp(12), dp(4), dp(12), dp(4));
+        more.setContentDescription(context.getString(R.string.nothing_drawer_more));
+        more.setClickable(true);
+        more.setFocusable(true);
+        more.setOnClickListener(v -> openDrawerSettings());
+        LayoutParams moreParams = new LayoutParams(WRAP_CONTENT, WRAP_CONTENT);
+        moreParams.leftMargin = dp(8);
+        header.addView(more, moreParams);
+
+        LayoutParams headerParams = new LayoutParams(WRAP_CONTENT, WRAP_CONTENT);
+        headerParams.gravity = Gravity.CENTER_HORIZONTAL;
+        headerParams.topMargin = getResources().getDimensionPixelSize(
                 R.dimen.all_apps_header_top_padding);
-        addView(toggle, toggleParams);
+        addView(header, headerParams);
 
         mCategoriesColumn = new LinearLayout(context);
         mCategoriesColumn.setOrientation(VERTICAL);
@@ -141,6 +161,22 @@ public class NothingDrawerView extends LinearLayout {
 
         updateTabs();
         mContent.setVisibility(GONE);
+    }
+
+    /** True while a tapped category's page is showing (Back should close it first). */
+    public boolean isCategoryOpen() {
+        return mDetailPage.getVisibility() == VISIBLE;
+    }
+
+    /** Returns from an open category page to the category grid. */
+    public void closeCategory() {
+        showCategories();
+    }
+
+    private void openDrawerSettings() {
+        Intent intent = new Intent(getContext(), SettingsActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(intent);
     }
 
     /** Called with {@code true} when Categories is selected, {@code false} for All. */
