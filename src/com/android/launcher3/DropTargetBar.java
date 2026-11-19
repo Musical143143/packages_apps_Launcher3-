@@ -306,9 +306,19 @@ public class DropTargetBar extends FrameLayout
         return visibleCount;
     }
 
+    private java.util.function.Consumer<Boolean> mVisibilityListener;
+
+    /** Lets the home screen know when the drop targets show or hide. */
+    public void setVisibilityListener(java.util.function.Consumer<Boolean> listener) {
+        mVisibilityListener = listener;
+    }
+
     public void animateToVisibility(boolean isVisible) {
         if (mVisible != isVisible) {
             mVisible = isVisible;
+            if (mVisibilityListener != null) {
+                mVisibilityListener.accept(mVisible);
+            }
 
             // Cancel any existing animation
             if (mCurrentAnimation != null) {

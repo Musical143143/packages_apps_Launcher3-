@@ -66,9 +66,29 @@ final class EditModeActionBar extends LinearLayout {
         return params;
     }
 
-    /** Shows the bar only while the launcher is in edit mode. */
+    private boolean mEditMode;
+    private boolean mBatchToolbarVisible;
+    private boolean mDropTargetsVisible;
+
+    /** Shows the bar only in edit mode, and steps aside for the selection toolbar or drag targets. */
     void onStateChanged(LauncherState state) {
-        setVisibility(state == LauncherState.EDIT_MODE ? VISIBLE : GONE);
+        mEditMode = state == LauncherState.EDIT_MODE;
+        refreshVisibility();
+    }
+
+    void setBatchToolbarVisible(boolean visible) {
+        mBatchToolbarVisible = visible;
+        refreshVisibility();
+    }
+
+    void setDropTargetsVisible(boolean visible) {
+        mDropTargetsVisible = visible;
+        refreshVisibility();
+    }
+
+    private void refreshVisibility() {
+        setVisibility(mEditMode && !mBatchToolbarVisible && !mDropTargetsVisible
+                ? VISIBLE : GONE);
     }
 
     private void addAction(int labelRes, View.OnClickListener onClick) {

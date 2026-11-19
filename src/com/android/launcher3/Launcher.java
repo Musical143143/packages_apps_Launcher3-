@@ -499,6 +499,10 @@ public class Launcher extends StatefulActivity<LauncherState>
                 editModeBar.onStateChanged(finalState);
             }
         });
+        // Step aside for the drop targets and the multi-select toolbar while they are visible.
+        getDropTargetBar().setVisibilityListener(editModeBar::setDropTargetsVisible);
+        getWorkspace().getBatchEditor().setToolbarVisibilityListener(
+                editModeBar::setBatchToolbarVisible);
 
         updateDisallowBack();
 

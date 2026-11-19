@@ -53,6 +53,7 @@ public final class WorkspaceBatchEditor {
     private View mMove;
     private View mFolders;
     private WorkspaceFolderActions mFolderActions;
+    private java.util.function.Consumer<Boolean> mToolbarListener;
     private boolean mActive;
     private boolean mDragging;
     private boolean mClosing;
@@ -71,6 +72,20 @@ public final class WorkspaceBatchEditor {
     }
 
     public boolean isActive() { return mActive; }
+
+    /** Lets the home screen know when the selection toolbar shows or hides. */
+    public void setToolbarVisibilityListener(java.util.function.Consumer<Boolean> listener) {
+        mToolbarListener = listener;
+    }
+
+    /** The toolbar is only shown once at least one app is selected, and not while dragging. */
+    private void setToolbarVisible(boolean visible) {
+        if (mToolbar == null) return;
+        int visibility = visible ? View.VISIBLE : View.INVISIBLE;
+        if (mToolbar.getVisibility() == visibility) return;
+        mToolbar.setVisibility(visibility);
+        if (mToolbarListener != null) mToolbarListener.accept(visible);
+    }
 
     public boolean isDragging() { return mDragging; }
 
@@ -130,6 +145,7 @@ public final class WorkspaceBatchEditor {
         lp.leftMargin = lp.rightMargin = dp(16);
         lp.bottomMargin = dp(12);
         mLauncher.getDragLayer().addView(mToolbar, lp);
+        mToolbar.setVisibility(View.INVISIBLE);
         mCount = mToolbar.findViewById(R.id.batch_edit_count);
         mMove = mToolbar.findViewById(R.id.batch_edit_move);
         mFolders = mToolbar.findViewById(R.id.batch_edit_folders);
@@ -156,6 +172,7 @@ public final class WorkspaceBatchEditor {
     }
 
     public void close() {
+        if (mToolbarListener != null) mToolbarListener.accept(false);
         if (!mActive || mClosing) return;
         mClosing = true;
         if (mFolderActions != null) mFolderActions.close();
@@ -278,7 +295,7 @@ public final class WorkspaceBatchEditor {
             if (parent != null) parent.markCellsAsUnoccupiedForView(icon);
             icon.setVisibility(View.INVISIBLE);
         }
-        mToolbar.setVisibility(View.INVISIBLE);
+        setToolbarVisible(false);
     }
 
     public void onDragEnd() {
@@ -287,7 +304,7 @@ public final class WorkspaceBatchEditor {
         mDragged.clear();
         mDragging = false;
         if (mActive && !mClosing) {
-            mToolbar.setVisibility(View.VISIBLE);
+            setToolbarVisible(!mSelected.isEmpty());
             refreshIcons();
         }
     }
@@ -435,6 +452,7 @@ public final class WorkspaceBatchEditor {
                 : mLauncher.getResources().getQuantityString(R.plurals.batch_edit_count, count, count));
         mMove.setEnabled(count > 0 && !mDragging);
         mFolders.setEnabled(!mDragging);
+        setToolbarVisible(count > 0 && !mDragging);
     }
 
     private void showNoSpace() {
