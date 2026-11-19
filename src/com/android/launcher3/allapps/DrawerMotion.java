@@ -58,10 +58,15 @@ public final class DrawerMotion {
      * @return a handle that cancels the animation when run
      */
     public static Runnable run(Context context, float from, float to, Listener listener) {
-        if (LauncherPrefs.COS_APP_ANIMATIONS.get(context)) {
-            return spring(from, to, listener);
-        }
-        return tween(from, to, listener);
+        return runStyled(LauncherPrefs.COS_APP_ANIMATIONS.get(context), from, to, listener);
+    }
+
+    /**
+     * Same as {@link #run}, but in the given style rather than the saved setting. Used by the
+     * settings preview cards.
+     */
+    public static Runnable runStyled(boolean enhanced, float from, float to, Listener listener) {
+        return enhanced ? spring(from, to, listener) : tween(from, to, listener);
     }
 
     private static Runnable spring(float from, float to, Listener listener) {

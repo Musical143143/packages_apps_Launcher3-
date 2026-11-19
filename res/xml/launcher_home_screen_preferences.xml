@@ -151,6 +151,11 @@
             android:persistent="true"
             launcher:iconSpaceReserved="false" />
 
+        <com.android.launcher3.settings.AnimationPreviewPreference
+            android:key="pref_animation_preview"
+            android:selectable="false"
+            launcher:iconSpaceReserved="false" />
+
         <ListPreference
             android:key="pref_animation_effect"
             android:title="@string/animation_effect_title"
