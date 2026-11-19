@@ -85,6 +85,7 @@ public class NothingDrawerView extends LinearLayout {
 
     private boolean mCategoriesMode;
     private Runnable mMotionCancel;
+    private final Runnable[] mTabMotion = new Runnable[2];
     private List<AppInfo> mApps = List.of();
     private Consumer<Boolean> mModeListener;
     private int mBottomInset;
@@ -443,21 +444,30 @@ public class NothingDrawerView extends LinearLayout {
     }
 
     private void updateTabs() {
-        styleTab(mAllTab, !mCategoriesMode);
-        styleTab(mCategoriesTab, mCategoriesMode);
+        styleTab(mAllTab, 0, !mCategoriesMode);
+        styleTab(mCategoriesTab, 1, mCategoriesMode);
     }
 
-    private void styleTab(TextView tab, boolean selected) {
-        GradientDrawable pill = new GradientDrawable();
-        pill.setCornerRadius(dp(28));
-        if (selected) {
+    /**
+     * Fades the white selection pill in or out behind a tab, using the drawer motion engine so
+     * it follows the same spring or tween setting as the rest of the drawer.
+     */
+    private void styleTab(TextView tab, int index, boolean selected) {
+        if (!(tab.getBackground() instanceof GradientDrawable)) {
+            GradientDrawable pill = new GradientDrawable();
+            pill.setCornerRadius(dp(28));
             pill.setColor(Color.WHITE);
-            tab.setTextColor(Color.BLACK);
-        } else {
-            pill.setColor(Color.TRANSPARENT);
-            tab.setTextColor(CaddyStyle.textColor(getContext()));
+            pill.setAlpha(0);
+            tab.setBackground(pill);
         }
-        tab.setBackground(pill);
+        GradientDrawable pill = (GradientDrawable) tab.getBackground();
+        tab.setTextColor(selected ? Color.BLACK : CaddyStyle.textColor(getContext()));
+        if (mTabMotion[index] != null) {
+            mTabMotion[index].run();
+        }
+        float from = pill.getAlpha() / 255f;
+        mTabMotion[index] = DrawerMotion.run(getContext(), from, selected ? 1f : 0f,
+                value -> pill.setAlpha(Math.round(Math.max(0f, Math.min(1f, value)) * 255)));
     }
 
     private TextView label(String text) {

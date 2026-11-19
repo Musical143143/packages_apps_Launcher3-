@@ -16,6 +16,7 @@
 
 package com.android.launcher3;
 
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Color;
@@ -50,7 +51,7 @@ final class EditModeActionBar extends LinearLayout {
 
         addAction(R.string.widget_button_text, v -> mLauncher.openWidgetsFullSheet());
         addAction(R.string.edit_mode_wallpaper, v -> openWallpaperPicker());
-        addAction(R.string.edit_mode_layout, v -> openHomeSettings());
+        addAction(R.string.edit_mode_layout, v -> openLayoutPicker());
         addAction(R.string.edit_mode_home_settings, v -> openHomeSettings());
         addAction(R.string.edit_mode_done, v -> mLauncher.getStateManager().goToState(
                 LauncherState.NORMAL, true));
@@ -91,6 +92,45 @@ final class EditModeActionBar extends LinearLayout {
         } catch (ActivityNotFoundException ignored) {
             // No wallpaper picker installed; nothing to open.
         }
+    }
+
+    /** In-place layout picker: 4 x 6, 5 x 6 or 5 x 7 grids, applied with Apply. */
+    private void openLayoutPicker() {
+        final String[] gridNames = {"4_by_6", "5_by_6", "5_by_7"};
+        final int[] labels = {
+                R.string.edit_mode_layout_4_by_6,
+                R.string.edit_mode_layout_5_by_6,
+                R.string.edit_mode_layout_5_by_7,
+        };
+        String current = LauncherPrefs.get(getContext()).get(LauncherPrefs.GRID_NAME);
+        int checked = -1;
+        CharSequence[] items = new CharSequence[gridNames.length];
+        for (int i = 0; i < gridNames.length; i++) {
+            items[i] = getContext().getString(labels[i]);
+            if (gridNames[i].equals(current)) {
+                checked = i;
+            }
+        }
+        final int[] selection = {checked};
+        new AlertDialog.Builder(mLauncher)
+                .setTitle(R.string.edit_mode_layout)
+                .setSingleChoiceItems(items, checked, (dialog, which) -> selection[0] = which)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.edit_mode_layout_apply, (dialog, which) -> {
+                    if (selection[0] >= 0) {
+                        applyLayout(gridNames[selection[0]]);
+                    }
+                })
+                .show();
+    }
+
+    /** Saves the chosen grid; it takes effect when the launcher restarts. */
+    private void applyLayout(String gridName) {
+        if (gridName.equals(LauncherPrefs.get(getContext()).get(LauncherPrefs.GRID_NAME))) {
+            return;
+        }
+        LauncherPrefs.get(getContext()).put(LauncherPrefs.GRID_NAME, gridName);
+        LauncherAppState.INSTANCE.executeIfCreated(app -> app.setNeedsRestart());
     }
 
     private void openHomeSettings() {
