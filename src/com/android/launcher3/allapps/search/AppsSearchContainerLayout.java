@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
+import android.animation.ValueAnimator;
 import android.graphics.Color;
 import android.graphics.Outline;
 import android.graphics.Rect;
@@ -47,6 +48,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.DecelerateInterpolator;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.view.ViewOutlineProvider;
 
@@ -104,6 +106,9 @@ public class AppsSearchContainerLayout extends ExtendedEditText
 
     private final AxViewBackdropBlur mBackdropBlur = new AxViewBackdropBlur(this, false);
     private final GradientDrawable mBackgroundTintDrawable = new GradientDrawable();
+    private static final long GLASS_ANIM_DURATION_MS = 240;
+    private final GlassSearchBackground mGlassBackground = new GlassSearchBackground();
+    private ValueAnimator mGlassAnimator;
     private boolean mCrossWindowBlurEnabled;
     private boolean mIsVisibleToUser;
     private int mBlurDepth = 45;
@@ -313,37 +318,41 @@ public class AppsSearchContainerLayout extends ExtendedEditText
 
     private void setUpPillSearchBackground(boolean active) {
         float cornerRadius = getHeight() > 0 ? (getHeight() / 2f) : (Utilities.dpToPx(48) / 2f);
-        mBackgroundTintDrawable.setShape(GradientDrawable.RECTANGLE);
-        mBackgroundTintDrawable.setCornerRadius(cornerRadius);
+        applyGlassBackground(cornerRadius, active);
+    }
 
-        boolean isDarkTheme = Utilities.isDarkTheme(getContext());
-        int baseColor = LauncherPrefs.DOCK_THEME.get(getContext())
-                ? Themes.getAttrColor(getContext(), R.attr.qsbFillColorThemed)
-                : Themes.getAttrColor(getContext(), R.attr.qsbFillColor);
-
-        // Keep the idle pill opaque so blur cannot appear partway through opening the drawer.
-        int fillColor = Color.rgb(
-                Color.red(baseColor), Color.green(baseColor), Color.blue(baseColor));
-        int strokeWidth = 0;
-        int strokeColor = Color.TRANSPARENT;
-        if (active) {
-            int opacity = Utilities.boundToRange(
-                    LauncherPrefs.HOTSEAT_QSB_OPACITY.get(getContext()), 20, 100);
-            int alpha = Math.round((isDarkTheme ? 175f : 195f) * opacity / 100f);
-            fillColor = Color.argb(
-                    alpha, Color.red(baseColor), Color.green(baseColor), Color.blue(baseColor));
-            strokeWidth = Math.max(1, Utilities.dpToPx(1.5f));
-            strokeColor = isDarkTheme
-                    ? Color.argb(140, 255, 255, 255)
-                    : Color.argb(90, 0, 0, 0);
+    /** Applies the iOS glass background and animates it to the idle or active look. */
+    private void applyGlassBackground(float cornerRadius, boolean active) {
+        mGlassBackground.setCornerRadius(cornerRadius);
+        mGlassBackground.setDark(Utilities.isDarkTheme(getContext()));
+        if (getBackground() != mGlassBackground) {
+            setBackground(mGlassBackground);
+            mGlassBackground.setProgress(active ? 1f : 0f);
         }
+        setClipToOutline(true);
+        animateGlass(active);
+    }
 
-        mBackgroundTintDrawable.setColor(fillColor);
-        mBackgroundTintDrawable.setStroke(strokeWidth, strokeColor);
-        setClipToOutline(false);
-        if (getBackground() != mBackgroundTintDrawable) {
-            setBackground(mBackgroundTintDrawable);
+    /** Animates the glass fill and rim, with a slight lift, between idle and active. */
+    private void animateGlass(boolean active) {
+        float target = active ? 1f : 0f;
+        if (mGlassAnimator != null) {
+            mGlassAnimator.cancel();
         }
+        if (mGlassBackground.getProgress() == target) {
+            return;
+        }
+        mGlassAnimator = ValueAnimator.ofFloat(mGlassBackground.getProgress(), target);
+        mGlassAnimator.setDuration(GLASS_ANIM_DURATION_MS);
+        mGlassAnimator.setInterpolator(new DecelerateInterpolator(1.5f));
+        mGlassAnimator.addUpdateListener(animation -> {
+            float value = (float) animation.getAnimatedValue();
+            mGlassBackground.setProgress(value);
+            float scale = 1f + 0.015f * value;
+            setScaleX(scale);
+            setScaleY(scale);
+        });
+        mGlassAnimator.start();
     }
 
     private void updateSearchBarStyle() {
@@ -397,11 +406,7 @@ public class AppsSearchContainerLayout extends ExtendedEditText
         int color = Themes.getAttrColor(context,
                 mShowGoogleSearchActions && LauncherPrefs.DOCK_THEME.get(context)
                         ? R.attr.qsbFillColorThemed : R.attr.qsbFillColor);
-        PaintDrawable background = new PaintDrawable(color);
-        float radius = getLegacyCornerRadius();
-        background.setCornerRadius(radius);
-        setBackground(background);
-        setClipToOutline(radius > 0);
+        applyGlassBackground(getLegacyCornerRadius(), isUniversalSearchActive());
     }
 
     private float getLegacyCornerRadius() {
@@ -561,6 +566,7 @@ public class AppsSearchContainerLayout extends ExtendedEditText
         super.onSizeChanged(w, h, oldw, oldh);
         if (mUsePillSearchBar && h > 0) {
             mBackgroundTintDrawable.setCornerRadius(h / 2f);
+            mGlassBackground.setCornerRadius(h / 2f);
         }
     }
 
@@ -621,6 +627,9 @@ public class AppsSearchContainerLayout extends ExtendedEditText
     @Override
     protected void onFocusChanged(boolean focused, int direction, Rect previouslyFocusedRect) {
         super.onFocusChanged(focused, direction, previouslyFocusedRect);
+        if (getBackground() == mGlassBackground) {
+            animateGlass(focused || isUniversalSearchActive());
+        }
         if (focused && mAppsView != null && !mAppsView.isUniversalSearchActive()) {
             mAppsView.setUniversalSearchActive(true);
         }
