@@ -38,6 +38,7 @@ public final class AlphaIndexBar extends LinearLayout {
 
     private final List<AlphabeticalAppsList.FastScrollSectionInfo> mSections = new ArrayList<>();
     private final List<TextView> mLetters = new ArrayList<>();
+    private final List<Runnable> mLetterMotion = new ArrayList<>();
     private Consumer<AlphabeticalAppsList.FastScrollSectionInfo> mOnSelect;
     private int mSelectedIndex = -1;
 
@@ -59,6 +60,8 @@ public final class AlphaIndexBar extends LinearLayout {
         mOnSelect = onSelect;
         mSections.clear();
         removeAllViews();
+        cancelAllLetterMotion();
+        mLetterMotion.clear();
         mLetters.clear();
         mSelectedIndex = -1;
         if (sections == null) {
@@ -79,6 +82,7 @@ public final class AlphaIndexBar extends LinearLayout {
             letter.setPadding(0, dp(1), 0, dp(1));
             addView(letter, new LayoutParams(dp(18), dp(14)));
             mLetters.add(letter);
+            mLetterMotion.add(null);
         }
     }
 
@@ -123,20 +127,37 @@ public final class AlphaIndexBar extends LinearLayout {
 
     private void setSelectedIndex(int index) {
         if (mSelectedIndex >= 0 && mSelectedIndex < mLetters.size()) {
-            styleLetter(mLetters.get(mSelectedIndex), false);
+            styleLetter(mSelectedIndex, false);
         }
         mSelectedIndex = index;
         if (index >= 0 && index < mLetters.size()) {
-            styleLetter(mLetters.get(index), true);
+            styleLetter(index, true);
         }
     }
 
-    private void styleLetter(TextView letter, boolean selected) {
+    private void styleLetter(int index, boolean selected) {
+        TextView letter = mLetters.get(index);
         letter.setTextColor(selected
                 ? Themes.getAttrColor(getContext(), android.R.attr.colorAccent)
                 : Themes.getAttrColor(getContext(), android.R.attr.textColorSecondary));
-        letter.setScaleX(selected ? 1.4f : 1f);
-        letter.setScaleY(selected ? 1.4f : 1f);
+        Runnable previous = mLetterMotion.get(index);
+        if (previous != null) {
+            previous.run();
+        }
+        float from = letter.getScaleX();
+        float to = selected ? 1.4f : 1f;
+        mLetterMotion.set(index, DrawerMotion.run(getContext(), from, to, scale -> {
+            letter.setScaleX(scale);
+            letter.setScaleY(scale);
+        }));
+    }
+
+    private void cancelAllLetterMotion() {
+        for (Runnable motion : mLetterMotion) {
+            if (motion != null) {
+                motion.run();
+            }
+        }
     }
 
     private int dp(float value) {

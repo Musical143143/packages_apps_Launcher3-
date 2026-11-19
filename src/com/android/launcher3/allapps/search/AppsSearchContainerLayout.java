@@ -26,7 +26,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
-import android.animation.ValueAnimator;
 import android.graphics.Color;
 import android.graphics.Outline;
 import android.graphics.Rect;
@@ -48,7 +47,6 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.animation.DecelerateInterpolator;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.view.ViewOutlineProvider;
 
@@ -60,6 +58,7 @@ import com.android.launcher3.Insettable;
 import com.android.launcher3.LauncherPrefs;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
+import com.android.launcher3.allapps.DrawerMotion;
 import com.android.launcher3.allapps.ActivityAllAppsContainerView;
 import com.android.launcher3.allapps.AllAppsStore;
 import com.android.launcher3.allapps.BaseAllAppsAdapter.AdapterItem;
@@ -106,9 +105,8 @@ public class AppsSearchContainerLayout extends ExtendedEditText
 
     private final AxViewBackdropBlur mBackdropBlur = new AxViewBackdropBlur(this, false);
     private final GradientDrawable mBackgroundTintDrawable = new GradientDrawable();
-    private static final long GLASS_ANIM_DURATION_MS = 240;
     private final GlassSearchBackground mGlassBackground = new GlassSearchBackground();
-    private ValueAnimator mGlassAnimator;
+    private Runnable mGlassMotion;
     private boolean mCrossWindowBlurEnabled;
     private boolean mIsVisibleToUser;
     private int mBlurDepth = 45;
@@ -336,23 +334,20 @@ public class AppsSearchContainerLayout extends ExtendedEditText
     /** Animates the glass fill and rim, with a slight lift, between idle and active. */
     private void animateGlass(boolean active) {
         float target = active ? 1f : 0f;
-        if (mGlassAnimator != null) {
-            mGlassAnimator.cancel();
+        if (mGlassMotion != null) {
+            mGlassMotion.run();
+            mGlassMotion = null;
         }
         if (mGlassBackground.getProgress() == target) {
             return;
         }
-        mGlassAnimator = ValueAnimator.ofFloat(mGlassBackground.getProgress(), target);
-        mGlassAnimator.setDuration(GLASS_ANIM_DURATION_MS);
-        mGlassAnimator.setInterpolator(new DecelerateInterpolator(1.5f));
-        mGlassAnimator.addUpdateListener(animation -> {
-            float value = (float) animation.getAnimatedValue();
-            mGlassBackground.setProgress(value);
-            float scale = 1f + 0.015f * value;
-            setScaleX(scale);
-            setScaleY(scale);
-        });
-        mGlassAnimator.start();
+        mGlassMotion = DrawerMotion.run(getContext(), mGlassBackground.getProgress(), target,
+                value -> {
+                    mGlassBackground.setProgress(value);
+                    float scale = 1f + 0.015f * value;
+                    setScaleX(scale);
+                    setScaleY(scale);
+                });
     }
 
     private void updateSearchBarStyle() {

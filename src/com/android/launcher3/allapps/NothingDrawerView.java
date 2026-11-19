@@ -56,7 +56,6 @@ public class NothingDrawerView extends LinearLayout {
     private static final int RECENT_COUNT = 4;
     private static final int TILE_APPS = 4;
     private static final int DETAIL_COLUMNS = 4;
-    private static final long ANIM_DURATION = 250;
 
     /**
      * Category order and names as shown in the reference design, each mapped to the existing
@@ -85,6 +84,7 @@ public class NothingDrawerView extends LinearLayout {
     private final LinearLayout mDetailGrid;
 
     private boolean mCategoriesMode;
+    private Runnable mMotionCancel;
     private List<AppInfo> mApps = List.of();
     private Consumer<Boolean> mModeListener;
     private int mBottomInset;
@@ -363,22 +363,42 @@ public class NothingDrawerView extends LinearLayout {
         mDetailTitle.setText(title);
         mDetailGrid.removeAllViews();
         addAppGrid(mDetailGrid, apps);
-        mCategoriesScroll.animate().cancel();
-        mCategoriesScroll.animate().alpha(0f).setDuration(ANIM_DURATION / 2)
-                .withEndAction(() -> mCategoriesScroll.setVisibility(GONE)).start();
-        mDetailPage.animate().cancel();
-        mDetailPage.setAlpha(0f);
-        mDetailPage.setTranslationY(dp(24));
+        cancelMotion();
         mDetailPage.setVisibility(VISIBLE);
-        mDetailPage.animate().alpha(1f).translationY(0).setDuration(ANIM_DURATION).start();
+        mCategoriesScroll.setVisibility(VISIBLE);
+        float rise = dp(24);
+        mMotionCancel = DrawerMotion.run(getContext(), 0f, 1f, p -> {
+            mDetailPage.setAlpha(p);
+            mDetailPage.setTranslationY(rise * (1f - p));
+            mCategoriesScroll.setAlpha(1f - p);
+            if (p >= 0.999f) {
+                mCategoriesScroll.setVisibility(GONE);
+            }
+        });
     }
 
     private void showCategories() {
-        mDetailPage.animate().cancel();
-        mDetailPage.setVisibility(GONE);
-        mCategoriesScroll.animate().cancel();
-        mCategoriesScroll.setAlpha(1f);
+        cancelMotion();
+        if (mDetailPage.getVisibility() != VISIBLE) {
+            mCategoriesScroll.setAlpha(1f);
+            mCategoriesScroll.setVisibility(VISIBLE);
+            return;
+        }
         mCategoriesScroll.setVisibility(VISIBLE);
+        mMotionCancel = DrawerMotion.run(getContext(), mDetailPage.getAlpha(), 0f, p -> {
+            mDetailPage.setAlpha(p);
+            mCategoriesScroll.setAlpha(1f - p);
+            if (p <= 0.001f) {
+                mDetailPage.setVisibility(GONE);
+            }
+        });
+    }
+
+    private void cancelMotion() {
+        if (mMotionCancel != null) {
+            mMotionCancel.run();
+            mMotionCancel = null;
+        }
     }
 
     private void addAppGrid(LinearLayout target, List<AppInfo> apps) {
