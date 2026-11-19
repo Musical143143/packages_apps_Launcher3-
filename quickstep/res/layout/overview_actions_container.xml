@@ -47,8 +47,9 @@
                 android:layout_height="48dp"
                 android:text="@string/recents_clear_all_title"
                 android:tint="?android:attr/colorAccent"
-                android:textColor="?android:attr/colorAccent"
-                android:background="@drawable/bg_overview_actions_button"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="18sp"
+                android:background="@drawable/bg_overview_close_pill"
                 android:visibility="gone" />
 
             <Space
