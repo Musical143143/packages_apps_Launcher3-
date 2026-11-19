@@ -50,6 +50,7 @@ public final class WorkspaceBatchEditor {
     private final ArrayList<BubbleTextView> mDragged = new ArrayList<>();
     private View mToolbar;
     private TextView mCount;
+    private TextView mCancelPill;
     private View mMove;
     private View mFolders;
     private WorkspaceFolderActions mFolderActions;
@@ -149,6 +150,7 @@ public final class WorkspaceBatchEditor {
         mCount = mToolbar.findViewById(R.id.batch_edit_count);
         mMove = mToolbar.findViewById(R.id.batch_edit_move);
         mFolders = mToolbar.findViewById(R.id.batch_edit_folders);
+        ensureCancelPill();
         if (mFolderActions == null) mFolderActions = new WorkspaceFolderActions(mLauncher, mWorkspace);
         mFolders.setOnClickListener(v -> mFolderActions.show(new ArrayList<>(mSelected)));
         mToolbar.findViewById(R.id.batch_edit_done).setOnClickListener(v -> finish());
@@ -161,6 +163,46 @@ public final class WorkspaceBatchEditor {
             if (empty != null) mWorkspace.snapToPage(mWorkspace.indexOfChild(empty));
         });
         refreshIcons();
+    }
+
+    /** Top pill that clears the current selection; visible while any app is selected. */
+    private void ensureCancelPill() {
+        if (mCancelPill != null) return;
+        TextView pill = new TextView(mLauncher);
+        pill.setText("\u2715 " + mLauncher.getString(android.R.string.cancel));
+        pill.setTextSize(14);
+        pill.setTextColor(Color.WHITE);
+        pill.setGravity(Gravity.CENTER);
+        pill.setPadding(dp(16), dp(8), dp(16), dp(8));
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(Color.argb(200, 24, 24, 24));
+        background.setCornerRadius(dp(20));
+        pill.setBackground(background);
+        pill.setOnClickListener(v -> {
+            mSelected.clear();
+            refreshIcons();
+        });
+        BaseDragLayer.LayoutParams lp = new BaseDragLayer.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+        lp.topMargin = mLauncher.getDeviceProfile().getInsets().top + dp(16);
+        mLauncher.getDragLayer().addView(pill, lp);
+        pill.setVisibility(View.INVISIBLE);
+        mCancelPill = pill;
+    }
+
+    /** Called when the selection is dropped on the Create folder target. */
+    void onCreateFolderDrop() {
+        if (!mActive || mClosing) return;
+        ArrayList<BubbleTextView> selection = new ArrayList<>(mDragged);
+        // Put the icons back in place before the name prompt; the folder step moves them.
+        restoreDraggedViews();
+        mDragged.clear();
+        mWorkspace.post(() -> {
+            if (mActive && mFolderActions != null) {
+                mFolderActions.askFolderNameFromDrop(selection);
+            }
+        });
     }
 
     public void finish() {
@@ -188,6 +230,8 @@ public final class WorkspaceBatchEditor {
         mLastSpans = mLastPositions = null;
         mLauncher.getDragLayer().removeView(mToolbar);
         mToolbar = null;
+        if (mCancelPill != null) mLauncher.getDragLayer().removeView(mCancelPill);
+        mCancelPill = null;
         mCount = null;
         mMove = null;
         mFolders = null;
@@ -453,6 +497,9 @@ public final class WorkspaceBatchEditor {
         mMove.setEnabled(count > 0 && !mDragging);
         mFolders.setEnabled(!mDragging);
         setToolbarVisible(count > 0 && !mDragging);
+        if (mCancelPill != null) {
+            mCancelPill.setVisibility(count > 0 ? View.VISIBLE : View.INVISIBLE);
+        }
     }
 
     private void showNoSpace() {
@@ -463,6 +510,9 @@ public final class WorkspaceBatchEditor {
         return view.getParent() instanceof ShortcutAndWidgetContainer container
                 && container.getParent() instanceof CellLayout layout ? layout : null;
     }
+
+    private static final int STACK_LAYERS = 2;
+    private static final int STACK_OFFSET_DP = 6;
 
     private int dp(int value) {
         return Math.round(value * mLauncher.getResources().getDisplayMetrics().density);
@@ -501,7 +551,20 @@ public final class WorkspaceBatchEditor {
                 Drawable base = super.createDrawable();
                 int width = base.getIntrinsicWidth();
                 int height = base.getIntrinsicHeight();
-                Bitmap bitmap = BitmapRenderer.createHardwareBitmap(width, height, canvas -> {
+                int stack = Math.min(STACK_LAYERS, Math.max(0, mDragged.size() - 1));
+                int offset = dp(STACK_OFFSET_DP);
+                int extra = stack * offset;
+                Bitmap bitmap = BitmapRenderer.createHardwareBitmap(width + extra,
+                        height + extra, canvas -> {
+                    // Other selected icons fan out behind the top one, farthest first.
+                    for (int i = stack; i >= 1; i--) {
+                        Drawable behind = new DragPreviewProvider(mDragged.get(i))
+                                .createDrawable();
+                        if (behind == null) continue;
+                        behind.setBounds(i * offset, i * offset, i * offset + width,
+                                i * offset + height);
+                        behind.draw(canvas);
+                    }
                     base.setBounds(0, 0, width, height);
                     base.draw(canvas);
                     Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);

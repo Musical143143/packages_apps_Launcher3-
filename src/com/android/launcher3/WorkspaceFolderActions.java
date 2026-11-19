@@ -113,6 +113,11 @@ final class WorkspaceFolderActions {
         return true;
     }
 
+    /** Starts the new-folder flow for a selection dropped on the Create folder target. */
+    void askFolderNameFromDrop(ArrayList<BubbleTextView> selection) {
+        if (validateSelection(selection, 2)) askFolderName(selection);
+    }
+
     private void askFolderName(ArrayList<BubbleTextView> selection) {
         EditText name = new EditText(mLauncher);
         name.setSingleLine(true);

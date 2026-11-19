@@ -42,4 +42,14 @@
         android:gravity="center"
         android:text="@string/uninstall_drop_target_label" />
 
+    <!-- Create folder target (batch selection drags only) -->
+    <com.android.launcher3.BatchCreateFolderDropTarget
+        android:id="@+id/create_folder_target_text"
+        style="@style/DropTargetButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:text="@string/batch_edit_create_folder" />
+
 </com.android.launcher3.DropTargetBar>
