@@ -15,6 +15,9 @@
  */
 package com.android.launcher3.allapps;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+
 import static com.android.launcher3.Flags.clearScrimOnReset;
 import static com.android.launcher3.Flags.enableExpandingPauseWorkButton;
 import static com.android.launcher3.allapps.ActivityAllAppsContainerView.AdapterHolder.MAIN;

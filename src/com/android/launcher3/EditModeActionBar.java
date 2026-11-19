@@ -16,6 +16,9 @@
 
 package com.android.launcher3;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
