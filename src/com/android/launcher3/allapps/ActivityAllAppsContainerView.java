@@ -290,6 +290,12 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         getLayoutInflater().inflate(R.layout.all_apps_content, this);
         mNothingDrawer = new NothingDrawerView(getContext());
         mNothingDrawer.setVisibility(GONE);
+        mNothingDrawer.addOnLayoutChangeListener((view, left, top, right, bottom,
+                oldLeft, oldTop, oldRight, oldBottom) -> {
+            if (bottom - top != oldBottom - oldTop) {
+                updateNothingDrawerInset();
+            }
+        });
         mNothingDrawer.setOnModeChangedListener(categories -> {
             View list = findViewById(R.id.apps_list_view);
             if (list != null) {
@@ -1760,7 +1766,26 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
             View search = findViewById(R.id.search_container_all_apps);
             boolean bottom = "bottom".equals(getSearchBarPlacement());
             mNothingDrawer.setBottomInset(search != null && bottom ? search.getHeight() : 0);
+            updateNothingListTopMargin();
         });
+    }
+
+    /**
+     * Keeps the app list below the Nothing header in All mode, so the header does not cover the
+     * first row of apps.
+     */
+    private void updateNothingListTopMargin() {
+        View list = findViewById(R.id.apps_list_view);
+        if (list == null || !(list.getLayoutParams() instanceof MarginLayoutParams lp)) {
+            return;
+        }
+        boolean reserve = mNothingDrawer.getVisibility() == VISIBLE
+                && list.getVisibility() == VISIBLE;
+        int top = reserve ? mNothingDrawer.getHeight() : 0;
+        if (lp.topMargin != top) {
+            lp.topMargin = top;
+            list.setLayoutParams(lp);
+        }
     }
 
     private void updateAppDrawerStyle() {
