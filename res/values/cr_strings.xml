@@ -594,6 +594,8 @@
     <string name="edit_mode_layout">Layout</string>
     <string name="edit_mode_home_settings">Home screen settings</string>
     <string name="edit_mode_done">Done</string>
+    <string name="app_drawer_alpha_index_title">Alphabetical index</string>
+    <string name="app_drawer_alpha_index_summary">Show A–Z letters on the right edge to jump to a section</string>
     <string name="animation_effect_title">Animation effect</string>
     <string name="animation_effect_standard">Standard</string>
     <string name="animation_effect_enhanced">Enhanced</string>

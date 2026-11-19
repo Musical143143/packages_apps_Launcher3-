@@ -179,6 +179,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     private boolean mIsSearching;
     private String mAppDrawerStyle = AppDrawerStyle.NORMAL;
     private NothingDrawerView mNothingDrawer;
+    private AlphaIndexBar mAlphaIndex;
     private boolean mIsAppLibrary;
     private boolean mShowFastScroller;
     private PageIndicatorDots mOneUiPageIndicator;
@@ -297,6 +298,15 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                 new android.widget.RelativeLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT);
         nothingParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_TOP);
         addView(mNothingDrawer, nothingParams);
+        mAlphaIndex = new AlphaIndexBar(getContext());
+        mAlphaIndex.setVisibility(GONE);
+        android.widget.RelativeLayout.LayoutParams alphaParams =
+                new android.widget.RelativeLayout.LayoutParams(WRAP_CONTENT, MATCH_PARENT);
+        alphaParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_END);
+        alphaParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_TOP);
+        alphaParams.topMargin = getResources().getDimensionPixelSize(
+                R.dimen.all_apps_header_top_padding);
+        addView(mAlphaIndex, alphaParams);
         mHeader = findViewById(R.id.all_apps_header);
         mAdditionalHeaderRows.clear();
         mAdditionalHeaderRows.addAll(getAdditionalHeaderRows());
@@ -1379,6 +1389,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         if (mNothingDrawer != null) {
             mNothingDrawer.setApps(Arrays.asList(mAllAppsStore.getApps()));
         }
+        updateAlphaIndex();
         mAH.forEach(holder -> {
             if (holder.mAppsList != null) {
                 holder.mAppsList.onAppsUpdated();
@@ -1708,6 +1719,23 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     }
 
 
+    /** Shows the persistent A-Z strip when the "Alphabetical index" setting is on. */
+    private void updateAlphaIndex() {
+        if (mAlphaIndex == null) {
+            return;
+        }
+        boolean enabled = LauncherPrefs.APP_DRAWER_ALPHA_INDEX.get(getContext())
+                && !AppDrawerStyle.isNothing(mAppDrawerStyle);
+        if (enabled) {
+            AllAppsRecyclerView recyclerView = getActiveRecyclerView();
+            if (recyclerView != null) {
+                mAlphaIndex.setSections(recyclerView.getFastScrollSections(),
+                        recyclerView::scrollToFastScrollSection);
+            }
+        }
+        mAlphaIndex.setVisibility(enabled ? VISIBLE : GONE);
+    }
+
     /** True while a Nothing-style category page is open inside the drawer. */
     public boolean isNothingCategoryOpen() {
         return mNothingDrawer != null && mNothingDrawer.isCategoryOpen();
@@ -1742,6 +1770,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
             mNothingDrawer.setVisibility(nothing ? VISIBLE : GONE);
             updateNothingDrawerInset();
         }
+        updateAlphaIndex();
         mIsAppLibrary = !LauncherPrefs.DRAWER_LIST.get(getContext());
     }
 

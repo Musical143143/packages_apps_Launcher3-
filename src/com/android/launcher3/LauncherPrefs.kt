@@ -294,6 +294,7 @@ constructor(@ApplicationContext private val encryptedContext: Context) {
         @JvmField val OVERSCROLL_VELOCITY_SCALE = backedUpItem("pref_overscroll_velocity_scale", 25)
         @JvmField val APP_DRAWER_CUSTOM_COLOR_DARK = backedUpItem("pref_app_drawer_custom_color_dark", -16777216)
         @JvmField val APP_DRAWER_OPACITY = backedUpItem("pref_app_drawer_opacity", 60)
+        @JvmField val APP_DRAWER_ALPHA_INDEX = backedUpItem("pref_app_drawer_alpha_index", false)
         @JvmField val APP_DRAWER_SORT_MODE = backedUpItem("pref_app_drawer_sorting_mode", "alphabetical")
         @JvmField val APP_DRAWER_STYLE = backedUpItem("pref_app_drawer_style", "normal")
         @JvmField val APP_DRAWER_STYLE_IOS_MIGRATED = nonRestorableItem("pref_app_drawer_style_ios_migrated", false)

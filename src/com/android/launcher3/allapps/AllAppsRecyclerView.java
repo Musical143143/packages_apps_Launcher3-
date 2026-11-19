@@ -181,6 +181,16 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
         return section.sectionName;
     }
 
+    /** Fast-scroll sections (one per letter) used by the persistent A-Z index. */
+    public List<AlphabeticalAppsList.FastScrollSectionInfo> getFastScrollSections() {
+        return mApps.getFastScrollerSections();
+    }
+
+    /** Jumps the list to a section chosen from the A-Z index. */
+    public void scrollToFastScrollSection(AlphabeticalAppsList.FastScrollSectionInfo section) {
+        mFastScrollHelper.smoothScrollToSection(section);
+    }
+
     @Override
     public void onFastScrollCompleted() {
         super.onFastScrollCompleted();
